@@ -15,7 +15,7 @@ import (
 )
 
 // DefaultHandler is the default Handler used by booby
-var DefaultHandler Handler = NewHandler()
+var DefaultHandler = NewHandler()
 
 // HandlerFunc defines message handler of booby middleware and method/router.
 type HandlerFunc func(*Context)
@@ -81,6 +81,11 @@ type Handler interface {
 	MaxReconnectTimes() int
 	// SetMaxReconnectTimes sets client's max reconnect times for.
 	SetMaxReconnectTimes(n int)
+
+	// ReconnectInterval returns client's reconnect interval.
+	ReconnectInterval() time.Duration
+	// SetReconnectInterval sets client's reconnect interval.
+	SetReconnectInterval(interval time.Duration)
 
 	// HandleOverstock registers handler which will be called when client send queue is overstock.
 	HandleOverstock(onOverstock func(c *Client, m *Message))
@@ -246,6 +251,7 @@ type handler struct {
 	sendQueueSize     int
 	maxBodyLen        int
 	maxReconnectTimes int
+	reconnectInterval time.Duration
 
 	onConnected      func(*Client)
 	onDisConnected   func(*Client)
@@ -351,6 +357,14 @@ func (h *handler) MaxReconnectTimes() int {
 
 func (h *handler) SetMaxReconnectTimes(n int) {
 	h.maxReconnectTimes = n
+}
+
+func (h *handler) ReconnectInterval() time.Duration {
+	return h.reconnectInterval
+}
+
+func (h *handler) SetReconnectInterval(d time.Duration) {
+	h.reconnectInterval = d
 }
 
 func (h *handler) HandleOverstock(onOverstock func(c *Client, m *Message)) {
@@ -832,14 +846,15 @@ func (h *handler) AsyncExecute(f func()) {
 // NewHandler returns a default Handler implementation.
 func NewHandler() Handler {
 	h := &handler{
-		logtag:         "[BOOBY CLI]",
-		batchRecv:      true,
-		batchSend:      true,
-		asyncWrite:     true,
-		asyncResponse:  true,
-		recvBufferSize: 8192,
-		sendQueueSize:  4096,
-		maxBodyLen:     DefaultMaxBodyLen,
+		logtag:            "[BOOBY CLI]",
+		batchRecv:         true,
+		batchSend:         true,
+		asyncWrite:        true,
+		asyncResponse:     true,
+		recvBufferSize:    8192,
+		sendQueueSize:     4096,
+		maxBodyLen:        DefaultMaxBodyLen,
+		reconnectInterval: time.Second,
 	}
 	h.wrapReader = func(conn net.Conn) io.Reader {
 		return bufio.NewReaderSize(conn, h.recvBufferSize)

@@ -17,7 +17,7 @@ import (
 
 func TestAll(t *testing.T) {
 	addr := "localhost:15678"
-	ln, err := Listen(addr, generateTLSConfig())
+	ln, err := ListenAddr(addr, generateTLSConfig())
 	if err != nil {
 		t.Fatalf("failed to listen: %v", err)
 	}

@@ -35,8 +35,8 @@ type Conn struct {
 	quic.Stream
 }
 
-// Listen wraps quic listen
-func Listen(addr string, config *tls.Config) (net.Listener, error) {
+// ListenAddr Listen wraps quic listen
+func ListenAddr(addr string, config *tls.Config) (*Listener, error) {
 	ln, err := quic.ListenAddr(addr, config, nil)
 	if err != nil {
 		return nil, err
@@ -44,8 +44,17 @@ func Listen(addr string, config *tls.Config) (net.Listener, error) {
 	return &Listener{ln}, err
 }
 
+// Listen wraps quic listen
+func Listen(conn net.PacketConn, tlsConf *tls.Config, quicConf *quic.Config) (*Listener, error) {
+	ln, err := quic.Listen(conn, tlsConf, quicConf)
+	if err != nil {
+		return nil, err
+	}
+	return &Listener{ln}, err
+}
+
 // Dial wraps quic dial
-func Dial(addr string, tlsConf *tls.Config, quicConf *quic.Config, timeout time.Duration) (net.Conn, error) {
+func Dial(addr string, tlsConf *tls.Config, quicConf *quic.Config, timeout time.Duration) (*Conn, error) {
 	var (
 		ctx    = context.Background()
 		cancel func()

@@ -814,7 +814,7 @@ func (c *Client) recvLoop() {
 					goto RECV
 				}
 
-				time.Sleep(time.Second)
+				time.Sleep(c.Handler.ReconnectInterval())
 			}
 			c.closeAndClean()
 		}
